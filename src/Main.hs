@@ -43,12 +43,12 @@ runThermometer (Options path interval internal) =
 options :: O.Parser Options
 options = Options <$> O.strArgument (   O.metavar "<path>"
                                      <> O.help "Path to the serial interface of the Bus Pirate")
-                  <*> O.option O.auto (    O.long "update-interval"
-                                        <> O.short 'u'
-                                        <> O.metavar "<seconds>"
-                                        <> O.help "Set the update interval in seconds"
-                                        <> O.value 1
-                                        <> O.showDefault)
+                  <*> O.option O.auto (   O.long "update-interval"
+                                       <> O.short 'u'
+                                       <> O.metavar "<seconds>"
+                                       <> O.help "Set the update interval in seconds"
+                                       <> O.value 1
+                                       <> O.showDefault)
                   <*> O.switch (   O.long "internal"
                                 <> O.short 'i'
                                 <> O.help "Show the internal temperature used for cold junction compensation")

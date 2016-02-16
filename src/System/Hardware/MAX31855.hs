@@ -1,11 +1,15 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module System.Hardware.MAX31855 ( MAX31855(..)
                                 , MAX31855Fault(..)
                                 , decodeMAX31855
                                 , formatMAX31855 ) where
 
 import           Data.Binary.Strict.BitGet
+import           Data.Bits
 import           Data.Bool.Extras
 import qualified Data.ByteString as BS
+import           Data.Int
+import           Data.Word
 import           Text.Printf
 
 data MAX31855Fault = MAX31855Fault { regSCV :: Bool
@@ -27,10 +31,18 @@ decodeMAX31855  = either error id <$> flip runBitGet decoder
                      skip 1
                      failures <- getFailures fault
                      return $ MAX31855 tc_temp int_temp failures
-        getTemperature scale bits = do sign <- bool 1 (-1) <$> getBit
-                                       raw_temp <- getAsWord16 (bits-1)
-                                       return $ convert sign scale raw_temp
-        convert sign scale = (* (sign * 2**scale)) . fromIntegral
+        getTemperature scale bits = do raw_temp <- getAsInt16 bits
+                                       return $ convert scale raw_temp
+        convert scale = (* (2**scale)) . fromIntegral
+
+        getAsInt16 :: Int -> BitGet Int16
+        getAsInt16 bits = do raw <- getAsWord16 bits
+                             return $ sign_extend raw
+          where sign_extend :: Word16 -> Int16
+                sign_extend x = if testBit x (bits-1)
+                                   then fromIntegral $ x .|. ((2^16-1) `shiftL` bits)
+                                   else fromIntegral x
+
         getFailures False = skip 3 *> return Nothing
         getFailures True = Just <$> (MAX31855Fault <$> getBit <*> getBit <*> getBit)
 
